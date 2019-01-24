@@ -97,7 +97,7 @@ void FlowSensor::on_gcode_received(void *argument)
                     float e_current = NAN;
                     pad_extruder_t rd;
                     if (PublicData::get_value(extruder_checksum, (void *)&rd)) e_current = rd.current_position;
-                    n = snprintf(buf, sizeof(buf), "E_pos:%1.4f E_meas:%1.4f", distance, e_current);
+                    n = snprintf(buf, sizeof(buf), "E_pos:%1.4f E_meas:%1.4f", e_current, distance);
                 }
                 gcode->txt_after_ok.append(buf, n);
 
@@ -180,12 +180,11 @@ uint32_t FlowSensor::update(uint32_t dummy) {
 }
 
 void FlowSensor::reset(float e) {
-    // TODO: Handle E values other than 0
-    rotation_count = 0;
-    last_angle = 0;
     error = false;
     int status;
+    int angle;
     int result;
+    // Read the current status and position of the sensor
     result = this->sensor->get_status(&status);
     if (result) {
         error = true;
@@ -197,12 +196,18 @@ void FlowSensor::reset(float e) {
         print_magnet_error();
         return;
     }
-    result = this->sensor->get_angle(&origin);
+    result = this->sensor->get_angle(&angle);
     if (result) {
         error = true;
         print_io_error(result);
         return;
     }
+    // Calculate what the rotation count and origin should be
+    // based on the E value we've been given.
+    float rotations = e / (direction*circumference);
+    rotation_count = floor(rotations);
+    last_angle = (rotations - (float)rotation_count) * 4096;
+    origin = (angle - last_angle + 4095) % 4095;
 }
 
 void FlowSensor::print_io_error(int code) {
