@@ -3,8 +3,10 @@
 #include "checksumm.h"
 #include "Config.h"
 #include "ConfigValue.h"
+#include "ExtruderPublicAccess.h"
 #include "Gcode.h"
 #include "Kernel.h"
+#include "PublicData.h"
 #include "SlowTicker.h"
 #include "StreamOutput.h"
 #include "StreamOutputPool.h"
@@ -72,45 +74,64 @@ void FlowSensor::on_gcode_received(void *argument)
     if (gcode->has_m) {
         // Print measured extrusion
         if (gcode->m == 114) {
-            char buf[32] = "E_meas:Err";
-            int n = 10;
-            if (!error) {
-                float distance = direction * (rotation_count + (last_angle / 4096.0)) * circumference;
-                n = snprintf(buf, sizeof(buf), "E_meas:%1.4f", distance);
-            }
-            gcode->txt_after_ok.append(buf, n);
+            // char buf[32] = "E_meas:Err";
+            // int n = 10;
+            // if (!error) {
+            //     float distance = direction * (rotation_count + (last_angle / 4096.0)) * circumference;
+            //     n = snprintf(buf, sizeof(buf), "E_meas:%1.4f", distance);
+            // }
+            // gcode->txt_after_ok.append(buf, n);
         }
 
-        // Print sensor status information
+        // TODO: Implement enable/disable with M405/M406
+
         else if (gcode->m == 407) {
-            int angle = 0;
-            int status = 0;
-            int result;
-            result = this->sensor->get_angle(&angle);
-            result = this->sensor->get_status(&status);
-            gcode->stream->printf("Flow Sensor - Comm: %s", (result ? "Err" : "Ok"));
-            if (!result) {
-                gcode->stream->printf(", Magnet: ");
-                switch (status)
-                {
-                    case MAGNET_OK:
-                        gcode->stream->printf("Good");
-                        break;
-                    case MAGNET_WEAK:
-                        gcode->stream->printf("Weak");
-                        break;
-                    case MAGNET_STRONG:
-                        gcode->stream->printf("Strong");
-                        break;
-                    default:
-                        gcode->stream->printf("Missing");
-                        break;
+            if (gcode->subcode == 0) {
+                // M407 - Print measured extrusion
+                char buf[64] = "E_meas:Err";
+                int n = 10;
+                if (!error) {
+                    // Measured extrusion
+                    float distance = direction * (rotation_count + (last_angle / 4096.0)) * circumference;
+                    // Target extrusion
+                    float e_current = NAN;
+                    pad_extruder_t rd;
+                    if (PublicData::get_value(extruder_checksum, (void *)&rd)) e_current = rd.current_position;
+                    n = snprintf(buf, sizeof(buf), "E_pos:%1.4f E_meas:%1.4f", distance, e_current);
                 }
-                gcode->stream->printf(", Angle: %i\n", angle);
-            } else {
-                gcode->stream->printf("\n");
+                gcode->txt_after_ok.append(buf, n);
+
+            } else if (gcode->subcode == 1) {
+                // M407.1 - Print sensor status information
+                int angle = 0;
+                int status = 0;
+                int result;
+                result = this->sensor->get_angle(&angle);
+                result = this->sensor->get_status(&status);
+                gcode->stream->printf("Flow Sensor - Comm: %s", (result ? "Err" : "Ok"));
+                if (!result) {
+                    gcode->stream->printf(", Magnet: ");
+                    switch (status)
+                    {
+                        case MAGNET_OK:
+                            gcode->stream->printf("Good");
+                            break;
+                        case MAGNET_WEAK:
+                            gcode->stream->printf("Weak");
+                            break;
+                        case MAGNET_STRONG:
+                            gcode->stream->printf("Strong");
+                            break;
+                        default:
+                            gcode->stream->printf("Missing");
+                            break;
+                    }
+                    gcode->stream->printf(", Angle: %i\n", angle);
+                } else {
+                    gcode->stream->printf("\n");
+                }
+                gcode->stream->printf("Origin: %i, Rotations: %i, Last Angle: %i\n", origin, rotation_count, last_angle);
             }
-            gcode->stream->printf("Origin: %i, Rotations: %i, Last Angle: %i\n", origin, rotation_count, last_angle);
         }
 
     } else if (gcode->has_g) {
