@@ -1,8 +1,15 @@
 #include "as5600.h"
 #include "I2C.h"
 
+// The Mbed i2c library is blocking, which is a problem for Smoothie.
+// Possible non-blocking alternatives:
+// * https://os.mbed.com/users/Sissors/code/MODI2C/
+// * https://www.nxp.com/docs/en/application-note/AN4803.pdf
+
+
 AS5600::AS5600()
 {
+    // Pins require external pull up resistors
     this->i2c = new mbed::I2C(P0_27, P0_28);    // Verified with multimeter
     //this->i2c->frequency(100000);               // Standard mode
     this->i2c->frequency(400000);               // Fast mode

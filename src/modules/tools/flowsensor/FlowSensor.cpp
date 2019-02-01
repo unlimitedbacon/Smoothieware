@@ -145,6 +145,9 @@ void FlowSensor::on_gcode_received(void *argument)
 
 uint32_t FlowSensor::update(uint32_t dummy) {
     if (!error) {
+        // I2C communication on the LPC1769 is really unreliable.
+        // Errors happen often, and we ignore them. Fortunately we
+        // only need to get a good response once in a while.
         int status;
         int angle;
         int result;
