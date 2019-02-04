@@ -8,6 +8,7 @@
 #include "libs/Kernel.h"
 #include "Panel.h"
 #include "PanelScreen.h"
+#include "bitmaps.h"
 
 #include "libs/nuts_bolts.h"
 #include "libs/utils.h"
@@ -16,6 +17,7 @@
 #include "libs/SDFAT.h"
 
 #include "modules/utils/player/PlayerPublicAccess.h"
+#include "modules/utils/about/AboutPublicAccess.h"
 #include "CustomScreen.h"
 #include "MainMenuScreen.h"
 #include "SlowTicker.h"
@@ -317,22 +319,6 @@ void Panel::on_main_loop(void *argument)
     }
 }
 
-
-#define ohw_logo_antipixel_width 80
-#define ohw_logo_antipixel_height 15
-static const uint8_t ohw_logo_antipixel_bits[] = {
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x01, 0x80, 0x0C, 0x00, 0x33, 0x18, 0xBB, 0xFF, 0xFF, 0xFF, 0xFD, 0x80, 0x5E,
-    0x80, 0x2D, 0x6B, 0x9B, 0xFF, 0xFF, 0xFF, 0xFD, 0x80, 0xFF, 0xC0, 0x2D, 0x18, 0xAB, 0xFF, 0xFF,
-    0xFF, 0xFD, 0x80, 0xFF, 0xC0, 0x2D, 0x7B, 0xB3, 0xFF, 0xFF, 0xFF, 0xFD, 0x80, 0x7F, 0x80, 0x33,
-    0x78, 0xBB, 0xFF, 0xFF, 0xFF, 0xFD, 0x81, 0xF3, 0xE0, 0x3F, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFD,
-    0x81, 0xF3, 0xE0, 0x3F, 0xFD, 0xB3, 0x18, 0xDD, 0x98, 0xC5, 0x81, 0xF3, 0xE0, 0x3F, 0xFD, 0xAD,
-    0x6B, 0x5D, 0x6B, 0x5D, 0x80, 0x73, 0x80, 0x3F, 0xFC, 0x21, 0x1B, 0x55, 0x08, 0xC5, 0x80, 0xF3,
-    0xC0, 0x3F, 0xFD, 0xAD, 0x5B, 0x49, 0x6A, 0xDD, 0x80, 0xE1, 0xC0, 0x3F, 0xFD, 0xAD, 0x68, 0xDD,
-    0x6B, 0x45, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xFF, 0xFF, 0xFF, 0xFF,
-    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
-};
-
 void Panel::on_idle(void *argument)
 {
     // avoid recursion if any screens end up calling ON_IDLE
@@ -351,14 +337,27 @@ void Panel::idle_processing()
         Version v;
         string build(v.get_build());
         string date(v.get_build_date());
+
+        string model;
+        string name;
+        struct pad_about about;
+        if (PublicData::get_value(about_checksum, &about)) {
+            model = about.model;
+            name = about.machine_name;
+        }
+
         this->lcd->clear();
-        this->lcd->setCursor(0, 0); this->lcd->printf("Welcome to Smoothie");
-        this->lcd->setCursor(0, 1); this->lcd->printf("%s", build.substr(0, 20).c_str());
-        this->lcd->setCursor(0, 2); this->lcd->printf("%s", date.substr(0, 20).c_str());
-        this->lcd->setCursor(0, 3); this->lcd->printf("Please wait....");
 
         if (this->lcd->hasGraphics()) {
-            this->lcd->bltGlyph(24, 40, ohw_logo_antipixel_width, ohw_logo_antipixel_height, ohw_logo_antipixel_bits);
+            //this->lcd->bltGlyph(24, 40, ohw_logo_antipixel_width, ohw_logo_antipixel_height, ohw_logo_antipixel_bits);
+            this->lcd->bltGlyph(12, 15, boot_logo_width, boot_logo_height, boot_logo_bits);
+            this->lcd->setCursorPX(51, 46); this->lcd->printf("%s", model.c_str());
+            this->lcd->setCursorPX(51, 54); this->lcd->printf("%s", name.c_str());
+        } else {
+            this->lcd->setCursor(0, 0); this->lcd->printf("Welcome to Smoothie");
+            this->lcd->setCursor(0, 1); this->lcd->printf("%s", build.substr(0, 20).c_str());
+            this->lcd->setCursor(0, 2); this->lcd->printf("%s", date.substr(0, 20).c_str());
+            this->lcd->setCursor(0, 3); this->lcd->printf("Please wait....");
         }
 
         this->lcd->on_refresh(true); // tell lcd to display now
