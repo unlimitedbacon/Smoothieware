@@ -12,6 +12,7 @@
 #include "utils/Gcode.h"
 #include "libs/nuts_bolts.h"
 #include "modules/robot/Conveyor.h"
+#include "modules/utils/about/AboutPublicAccess.h"
 #include "libs/SerialMessage.h"
 #include "libs/StreamOutput.h"
 #include "libs/StreamOutputPool.h"
@@ -269,6 +270,11 @@ try_again:
 
                             case 115: { // M115 Get firmware version and capabilities
                                 Version vers;
+
+                                struct pad_about about;
+                                if (PublicData::get_value(about_checksum, &about)) {
+                                    new_message.stream->printf("MACHINE_NAME:%s, MACHINE_TYPE:%s %s, ", about.machine_name.c_str(), about.make.c_str(), about.model.c_str());
+                                }
 
                                 new_message.stream->printf("FIRMWARE_NAME:Smoothieware, FIRMWARE_URL:http%%3A//smoothieware.org, X-SOURCE_CODE_URL:https://github.com/Smoothieware/Smoothieware, FIRMWARE_VERSION:%s, X-FIRMWARE_BUILD_DATE:%s, X-SYSTEM_CLOCK:%ldMHz, X-AXES:%d, X-GRBL_MODE:%d", vers.get_build(), vers.get_build_date(), SystemCoreClock / 1000000, MAX_ROBOT_ACTUATORS, THEKERNEL->is_grbl_mode());
 
