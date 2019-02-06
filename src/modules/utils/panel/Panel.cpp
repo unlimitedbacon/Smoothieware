@@ -344,6 +344,11 @@ void Panel::idle_processing()
         if (PublicData::get_value(about_checksum, &about)) {
             model = about.model;
             name = about.machine_name;
+            if (name.empty()) {
+                machine_name = about.make + " " + about.model;
+            } else {
+                machine_name = about.machine_name;
+            }
         }
 
         this->lcd->clear();

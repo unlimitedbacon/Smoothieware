@@ -93,6 +93,8 @@ class Panel : public Module {
 
         using encoder_cb_t= std::function<void(int ticks)>;
         bool enter_direct_encoder_mode(encoder_cb_t fnc);
+        
+        std::string machine_name;
 
         // as panelscreen accesses private fields in Panel
         friend class PanelScreen;
