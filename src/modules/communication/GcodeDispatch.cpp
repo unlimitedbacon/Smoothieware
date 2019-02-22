@@ -296,7 +296,7 @@ try_again:
 
                             case 117: // M117 is a special non compliant Gcode as it allows arbitrary text on the line following the command
                             {    // concatenate the command again and send to panel if enabled
-                                string str= single_command.substr(4) + possible_command;
+                                string str= single_command.substr(5) + possible_command;
                                 PublicData::set_value( panel_checksum, panel_display_message_checksum, &str );
                                 delete gcode;
                                 new_message.stream->printf("ok\r\n");
