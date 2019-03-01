@@ -83,6 +83,21 @@ void FlowSensor::on_gcode_received(void *argument)
             // gcode->txt_after_ok.append(buf, n);
         }
 
+        else if (gcode->m == 119) {
+            // M119 - Compatibility with Marlin Pulse
+            if (!error) {
+                // Measured extrusion
+                float distance = direction * (rotation_count + (last_angle / 4096.0)) * circumference;
+                // Target extrusion
+                float e_current = NAN;
+                pad_extruder_t rd;
+                if (PublicData::get_value(extruder_checksum, (void *)&rd)) e_current = rd.current_position;
+                gcode->stream->printf(" pos_0: SENSOR:%1.4f STEPPER:%1.4f", distance, e_current);
+            } else {
+                gcode->stream->printf(" pos_0:Err");
+            }
+        }
+
         // TODO: Implement enable/disable with M405/M406
 
         else if (gcode->m == 407) {
