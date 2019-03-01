@@ -19,6 +19,7 @@
 #include "modules/tools/temperatureswitch/TemperatureSwitch.h"
 #include "modules/tools/drillingcycles/Drillingcycles.h"
 #include "FilamentDetector.h"
+#include "modules/tools/flowsensor/FlowSensor.h"
 #include "MotorDriverControl.h"
 
 #include "modules/robot/Conveyor.h"
@@ -187,6 +188,9 @@ void init() {
     #endif
     #ifndef NO_TOOLS_FILAMENTDETECTOR
     kernel->add_module( new(AHB0) FilamentDetector() );
+    #endif
+    #ifndef NO_TOOLS_FLOWSENSOR
+    kernel->add_module( new(AHB0) FlowSensor() );
     #endif
     #ifndef NO_UTILS_MOTORDRIVERCONTROL
     kernel->add_module( new MotorDriverControl(0) );
