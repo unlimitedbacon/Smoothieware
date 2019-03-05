@@ -57,7 +57,7 @@ void WatchScreen::on_enter()
     THEPANEL->setup_menu(8);
     get_current_status();
     get_wpos();
-    get_sd_play_info();
+    THEPANEL->update_sd_play_info();
     this->current_speed = lroundf(get_current_speed());
     this->refresh_screen(false);
     THEPANEL->enter_control_mode(1, 0.5);
@@ -90,7 +90,7 @@ void WatchScreen::on_refresh()
     // Update Only every 20 refreshes, 1 a second
     update_counts++;
     if ( update_counts % 20 == 0 ) {
-        get_sd_play_info();
+        THEPANEL->update_sd_play_info();
         get_wpos();
         get_current_status();
         if (this->speed_changed) {
@@ -156,22 +156,6 @@ float WatchScreen::get_current_speed()
     return 6000.0F / THEROBOT->get_seconds_per_minute();
 }
 
-void WatchScreen::get_sd_play_info()
-{
-    void *returned_data;
-    bool ok = PublicData::get_value( player_checksum, get_progress_checksum, &returned_data );
-    if (ok) {
-        struct pad_progress p =  *static_cast<struct pad_progress *>(returned_data);
-        this->elapsed_time = p.elapsed_secs;
-        this->sd_pcnt_played = p.percent_complete;
-        THEPANEL->set_playing_file(p.filename);
-
-    } else {
-        this->elapsed_time = 0;
-        this->sd_pcnt_played = 0;
-    }
-}
-
 void WatchScreen::display_menu_line(uint16_t line)
 {
     // in menu mode
@@ -184,7 +168,11 @@ void WatchScreen::display_menu_line(uint16_t line)
             THEROBOT->from_millimeters(THEROBOT->get_feed_rate()),
             THEROBOT->from_millimeters(THEKERNEL->conveyor->get_current_feedrate()*60.0F));
             break;
-        case 5: THEPANEL->lcd->printf("%3d%% %2lu:%02lu %3u%% sd", this->current_speed, this->elapsed_time / 60, this->elapsed_time % 60, this->sd_pcnt_played); break;
+        case 5: {
+            unsigned long elapsed_time = THEPANEL->get_elapsed_time();
+            THEPANEL->lcd->printf("%3d%% %2lu:%02lu %3u%% sd", this->current_speed, elapsed_time / 60, elapsed_time % 60, THEPANEL->get_pcnt_played());
+            break;
+        }
         case 6:
             if(THEPANEL->has_laser()){
                 #ifndef NO_TOOLS_LASER

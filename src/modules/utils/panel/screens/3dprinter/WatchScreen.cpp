@@ -55,7 +55,7 @@ void WatchScreen::on_enter()
     THEPANEL->setup_menu(4);
     get_current_status();
     get_current_pos(this->pos);
-    get_sd_play_info();
+    THEPANEL->update_sd_play_info();
     this->current_speed = lroundf(get_current_speed());
     this->redraw();
     THEPANEL->enter_control_mode(1, 0.5);
@@ -105,7 +105,7 @@ void WatchScreen::on_refresh()
     // Update Only every 20 refreshes, 1 a second
     update_counts++;
     if ( update_counts % 20 == 0 ) {
-        get_sd_play_info();
+        THEPANEL->update_sd_play_info();
         get_current_pos(this->pos);
         get_current_status();
         if (this->speed_changed) {
@@ -194,22 +194,6 @@ float WatchScreen::get_current_speed()
     return 6000.0F / THEROBOT->get_seconds_per_minute();
 }
 
-void WatchScreen::get_sd_play_info()
-{
-    void *returned_data;
-    bool ok = PublicData::get_value( player_checksum, get_progress_checksum, &returned_data );
-    if (ok) {
-        struct pad_progress p =  *static_cast<struct pad_progress *>(returned_data);
-        this->elapsed_time = p.elapsed_secs;
-        this->sd_pcnt_played = p.percent_complete;
-        THEPANEL->set_playing_file(p.filename);
-
-    } else {
-        this->elapsed_time = 0;
-        this->sd_pcnt_played = 0;
-    }
-}
-
 void WatchScreen::display_menu_line(uint16_t line)
 {
     // in menu mode
@@ -255,21 +239,25 @@ void WatchScreen::display_menu_line(uint16_t line)
             }
             break;
         }
-        case 2: THEPANEL->lcd->printf("%3d%%  %02lu:%02lu:%02lu  %3u%%", this->current_speed, this->elapsed_time / 3600, (this->elapsed_time % 3600) / 60, this->elapsed_time % 60, this->sd_pcnt_played); break;
+        case 2: {
+            unsigned long elapsed_time = THEPANEL->get_elapsed_time();
+            THEPANEL->lcd->printf("%3d%%  %02lu:%02lu:%02lu  %3u%%", this->current_speed, elapsed_time / 3600, (elapsed_time % 3600) / 60, elapsed_time % 60, THEPANEL->get_pcnt_played());
+            break;
+        }
         case 3: THEPANEL->lcd->printf("%19s", this->get_status()); break;
     }
 }
 
 const char *WatchScreen::get_status()
 {
-    if (THEPANEL->hasMessage())
-        return THEPANEL->getMessage().c_str();
-
     if (THEKERNEL->is_halted())
         return "HALTED Reset or M999";
 
     if (THEPANEL->is_suspended())
         return "Suspended";
+
+    if (THEPANEL->hasMessage())
+        return THEPANEL->getMessage().c_str();
 
     if (THEPANEL->is_playing())
         return THEPANEL->get_playing_file();
@@ -397,11 +385,15 @@ void WatchScreen::draw_graphics()
     row++;
     
     if (THEPANEL->is_playing()) {
+        unsigned long elapsed_time = THEPANEL->get_elapsed_time();
+        unsigned int pcnt_played = THEPANEL->get_pcnt_played();
         // Print the elapsed print time
-        y = 11 + (row * (icon_height + 1));
-        THEPANEL->lcd->bltGlyph(x, y, icon_width, icon_height, time_icon);
-        THEPANEL->lcd->setCursorPX(x + icon_width + 1, y);
-        THEPANEL->lcd->printf("%luh%lum%lus", this->elapsed_time / 3600, (this->elapsed_time % 3600) / 60, this->elapsed_time % 60);
+        //if (elapsed_time != 0) {
+            y = 11 + (row * (icon_height + 1));
+            THEPANEL->lcd->bltGlyph(x, y, icon_width, icon_height, time_icon);
+            THEPANEL->lcd->setCursorPX(x + icon_width + 1, y);
+            THEPANEL->lcd->printf("%luh%lum%lus", elapsed_time / 3600, (elapsed_time % 3600) / 60, elapsed_time % 60);
+        //}
 
         // Print the progress bar
         THEPANEL->lcd->drawHLine(3, 55, 122);
@@ -412,10 +404,10 @@ void WatchScreen::draw_graphics()
         THEPANEL->lcd->pixel(2, 62);
         THEPANEL->lcd->pixel(125, 56);
         THEPANEL->lcd->pixel(125, 62);
-        THEPANEL->lcd->drawBox(2, 56, (this->sd_pcnt_played*124)/100, 7);
+        THEPANEL->lcd->drawBox(2, 56, (pcnt_played*124)/100, 7);
         THEPANEL->lcd->setCursorPX(55, 56);
         THEPANEL->lcd->setColor(2);
-        THEPANEL->lcd->printf("%u%%", this->sd_pcnt_played);
+        THEPANEL->lcd->printf("%u%%", pcnt_played);
         THEPANEL->lcd->setColor(1);
     }
 

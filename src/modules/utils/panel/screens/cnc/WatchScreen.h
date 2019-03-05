@@ -27,7 +27,6 @@ private:
     void get_current_status();
     float get_current_speed();
     void set_speed();
-    void get_sd_play_info();
     const char *get_status();
     const char *get_network();
 
@@ -35,8 +34,6 @@ private:
     int current_speed;
     float wpos[3], mpos[3];
     std::string wcs;
-    unsigned long elapsed_time;
-    unsigned int sd_pcnt_played;
     char *ipstr;
 
     struct {
