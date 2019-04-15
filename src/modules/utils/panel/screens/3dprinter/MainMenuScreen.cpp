@@ -103,7 +103,7 @@ void MainMenuScreen::setupConfigureScreen()
 void MainMenuScreen::on_enter()
 {
     THEPANEL->enter_menu_mode();
-    THEPANEL->setup_menu(8);
+    THEPANEL->setup_menu(7);
     this->refresh_menu();
 }
 
@@ -126,8 +126,8 @@ void MainMenuScreen::display_menu_line(uint16_t line)
         case 3: THEPANEL->lcd->printf("Prepare"); break;
         case 4: THEPANEL->lcd->printf("Custom"); break;
         case 5: THEPANEL->lcd->printf("Configure"); break;
-        case 6: THEPANEL->lcd->printf("Probe"); break;
-        case 7: THEPANEL->lcd->printf("About"); break;
+        //case 6: THEPANEL->lcd->printf("Probe"); break;
+        case 6: THEPANEL->lcd->printf("About"); break;
     }
 }
 
@@ -145,8 +145,8 @@ void MainMenuScreen::clicked_menu_entry(uint16_t line)
         case 3: THEPANEL->enter_screen(this->prepare_screen ); break;
         case 4: THEPANEL->enter_screen(THEPANEL->custom_screen ); break;
         case 5: setupConfigureScreen(); break;
-        case 6: THEPANEL->enter_screen((new ProbeScreen())->set_parent(this)); break;
-        case 7: THEPANEL->enter_screen(this->about_screen); break;
+        //case 6: THEPANEL->enter_screen((new ProbeScreen())->set_parent(this)); break;
+        case 6: THEPANEL->enter_screen(this->about_screen); break;
     }
 }
 
