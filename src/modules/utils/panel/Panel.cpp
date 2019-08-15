@@ -31,6 +31,7 @@
 
 #include "panels/ReprapDiscountGLCD.h"
 #include "panels/ST7565.h"
+#include "panels/ST7789.h"
 #include "panels/UniversalAdapter.h"
 
 #include "version.h"
@@ -47,6 +48,7 @@
 #define lcd_checksum               CHECKSUM("lcd")
 #define rrd_glcd_checksum          CHECKSUM("reprap_discount_glcd")
 #define st7565_glcd_checksum       CHECKSUM("st7565_glcd")
+#define st7789_rgblcd_checksum     CHECKSUM("st7789_rgblcd")
 #define ssd1306_oled_checksum      CHECKSUM("ssd1306_oled")
 #define viki2_checksum             CHECKSUM("viki2")
 #define mini_viki2_checksum        CHECKSUM("mini_viki2")
@@ -134,6 +136,8 @@ void Panel::on_module_loaded()
         this->lcd = new ST7565(2); // variant 2
     } else if (lcd_cksm == ssd1306_oled_checksum) {
         this->lcd = new ST7565(3); // variant 3
+    } else if (lcd_cksm == st7789_rgblcd_checksum) {
+        this->lcd = new ST7789();
     } else if (lcd_cksm == universal_adapter_checksum) {
         this->lcd = new UniversalAdapter();
     } else {
