@@ -12,6 +12,10 @@
 #define ST77XX_SWRESET    0x01
 #define ST77XX_RDDID      0x04
 #define ST77XX_RDDST      0x09
+#define ST77XX_RDDPM      0x0A
+#define ST77XX_RDDMADCTL  0x0B
+#define ST77XX_RDDCOLMOD  0x0C
+#define ST77XX_RDDIM      0x0D
 
 #define ST77XX_SLPIN      0x10
 #define ST77XX_SLPOUT     0x11
@@ -66,8 +70,13 @@ class ST7789 : public LcdBase {
 
     private:
         // Driver functions
-        void writeCommand(uint8_t cmd);
+        void startWrite();
+        void endWrite();
+        int  writeCommand(uint8_t cmd);
+        void setRotation(uint8_t m);
         void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+        void getID();
+        void getStatus();
 
         mbed::SPI* spi;
 
@@ -78,6 +87,11 @@ class ST7789 : public LcdBase {
 
         // Text drawing state
         int tx, ty;
+
+        uint32_t _xstart = 0;
+        uint32_t _ystart = 0;
+        uint8_t _colstart = 0;
+        uint8_t _rowstart = 0;
 };
 
 #endif /* ST7789_H_ */

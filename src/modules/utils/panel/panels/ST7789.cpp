@@ -37,7 +37,9 @@ ST7789::ST7789()
     }
 
     this->spi = new mbed::SPI(mosi, miso, sclk);
+    // Should see if we can run this any faster. Find out maximum speed for lpc1769
     this->spi->frequency(THEKERNEL->config->value(panel_checksum, spi_frequency_checksum)->by_default(16000000)->as_number()); //4Mhz freq, can try go a little lower
+    this->spi->format(8, 0);
 
     // Chip Select Pin
     this->cs.from_string(THEKERNEL->config->value( panel_checksum, spi_cs_pin_checksum)->by_default("0.16")->as_string())->as_output();
@@ -58,6 +60,31 @@ ST7789::~ST7789()
     delete this->spi;
 }
 
+/**************************************************************************/
+/*!
+    @brief  Call before issuing command(s) or data to display. Performs
+            chip-select (if required) and starts an SPI transaction (if
+            using hardware SPI and transactions are supported). Required
+            for all display types; not an SPI-specific function.
+*/
+/**************************************************************************/
+void ST7789::startWrite(void) {
+    cs.set(0);
+}
+
+/**************************************************************************/
+/*!
+    @brief  Call after issuing command(s) or data to display. Performs
+            chip-deselect (if required) and ends an SPI transaction (if
+            using hardware SPI and transactions are supported). Required
+            for all display types; not an SPI-specific function.
+*/
+/**************************************************************************/
+void ST7789::endWrite(void) {
+    cs.set(1);
+}
+
+/**************************************************************************/
 /*!
     @brief  Write a single command byte to the display. Chip-select and
             transaction must have been previously set -- this ONLY sets
@@ -66,10 +93,52 @@ ST7789::~ST7789()
             function -- just use spiWrite().
     @param  cmd  8-bit command to write.
 */
-void ST7789::writeCommand(uint8_t cmd) {
-    SPI_DC_LOW();
-    spi->write(cmd);
-    SPI_DC_HIGH();
+/**************************************************************************/
+int ST7789::writeCommand(uint8_t cmd) {
+    int r;
+    if(a0.connected()) a0.set(0);
+    r = spi->write(cmd);
+    if(a0.connected()) a0.set(1);
+    return r;
+}
+
+/**************************************************************************/
+/*!
+    @brief  Set origin of (0,0) and orientation of TFT display
+    @param  m  The index for rotation, from 0-3 inclusive
+*/
+/**************************************************************************/
+void ST7789::setRotation(uint8_t m) {
+    uint8_t madctl = 0;
+
+    uint8_t rotation = m & 3; // can't be higher than 3
+
+    switch (rotation) {
+        case 0:
+            madctl  = ST77XX_MADCTL_MX | ST77XX_MADCTL_MY | ST77XX_MADCTL_RGB;
+            _xstart = _colstart;
+            _ystart = _rowstart;
+            break;
+        case 1:
+            madctl  = ST77XX_MADCTL_MY | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+            _xstart = _rowstart;
+            _ystart = _colstart;
+            break;
+        case 2:
+            madctl  = ST77XX_MADCTL_RGB;
+            _xstart = 0;
+            _ystart = 0;
+            break;
+        case 3:
+            madctl  = ST77XX_MADCTL_MX | ST77XX_MADCTL_MV | ST77XX_MADCTL_RGB;
+            _xstart = 0;
+            _ystart = 0;
+            break;
+    }
+    startWrite();
+    writeCommand(ST77XX_MADCTL);
+    spi->write(madctl);
+    endWrite();
 }
 
 /**************************************************************************/
@@ -83,23 +152,123 @@ void ST7789::writeCommand(uint8_t cmd) {
 /**************************************************************************/
 void ST7789::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 {
-  //x += _xstart;
-  //y += _ystart;
-  uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
-  uint32_t ya = ((uint32_t)y << 16) | (y+h-1); 
+    //x += _xstart;
+    //y += _ystart;
+    //uint32_t xa = ((uint32_t)x << 16) | (x+w-1);
+    //uint32_t ya = ((uint32_t)y << 16) | (y+h-1); 
 
-  writeCommand(ST77XX_CASET); // Column addr set
-  SPI_WRITE32(xa);
+    uint16_t x1 = x + _xstart;
+    uint16_t y1 = y + _ystart;
+    uint16_t x2 = x1 + w;
+    uint16_t y2 = y1 + h;
 
-  writeCommand(ST77XX_RASET); // Row addr set
-  SPI_WRITE32(ya);
+    writeCommand(ST77XX_CASET); // Column addr set
+    spi->write((uint8_t)(x1 >> 8));
+    spi->write((uint8_t)(x1 & 0xff));
+    spi->write((uint8_t)(x2 >> 8));
+    spi->write((uint8_t)(x2 & 0xff));
+    //spi->write(xa);
+    //SPI_WRITE32(xa);
 
-  writeCommand(ST77XX_RAMWR); // write to RAM
+    writeCommand(ST77XX_RASET); // Row addr set
+    spi->write((uint8_t)(y1 >> 8));
+    spi->write((uint8_t)(y1 & 0xff));
+    spi->write((uint8_t)(y2 >> 8));
+    spi->write((uint8_t)(y2 & 0xff));
+    //spi->write(ya);
+    //SPI_WRITE32(ya);
+
+    writeCommand(ST77XX_RAMWR); // write to RAM
+}
+
+void ST7789::getID()
+{
+    // Get screen id
+    int id[8];
+    startWrite();
+    writeCommand(ST77XX_RDDID);
+    for (int i=0; i<8; i++) {
+        id[i] = spi->write(0);
+    }
+    endWrite();
+
+    THEKERNEL->streams->printf("ID:");
+    for (int i=0; i<8; i++) {
+        THEKERNEL->streams->printf(" %x", id[i]);
+    }
+    THEKERNEL->streams->printf("\n");
+
+    startWrite();
+    id[0] = writeCommand(ST77XX_RDID1);
+    id[1] = spi->write(0);
+    endWrite();
+
+    startWrite();
+    id[2] = writeCommand(ST77XX_RDID2);
+    id[3] = spi->write(1);
+    endWrite();
+
+    startWrite();
+    id[4] = writeCommand(ST77XX_RDID3);
+    id[5] = spi->write(2);
+    endWrite();
+
+    startWrite();
+    id[6] = writeCommand(ST77XX_RDID4);
+    id[7] = spi->write(3);
+    endWrite();
+
+    THEKERNEL->streams->printf("ID:");
+    for (int i=0; i<8; i++) {
+        THEKERNEL->streams->printf(" %x", id[i]);
+    }
+    THEKERNEL->streams->printf("\n");
+}
+
+void ST7789::getStatus()
+{
+    int stat[10];
+    startWrite();
+    writeCommand(ST77XX_RDDST);
+    for (int i=0; i<10; i++) {
+        stat[i] = spi->write(0);
+    }
+    endWrite();
+
+    THEKERNEL->streams->printf("Status:");
+    for (int i=0; i<10; i++) {
+        THEKERNEL->streams->printf(" %x", stat[i]);
+    }
+    THEKERNEL->streams->printf("\n");
+
+    startWrite();
+    stat[0] = writeCommand(ST77XX_RDDPM);
+    stat[1] = spi->write(0);
+    endWrite();
+
+    startWrite();
+    stat[2] = writeCommand(ST77XX_RDDCOLMOD);
+    stat[3] = spi->write(0);
+    endWrite();
+
+    startWrite();
+    stat[4] = writeCommand(ST77XX_RDDIM);
+    stat[5] = spi->write(0);
+    endWrite();
+
+    THEKERNEL->streams->printf("Status:");
+    for (int i=0; i<10; i++) {
+        THEKERNEL->streams->printf(" %x", stat[i]);
+    }
+    THEKERNEL->streams->printf("\n");
 }
 
 void ST7789::init()
 {
-    THEKERNEL->streams->printf("Initializing ST7789 LCD");
+    THEKERNEL->streams->printf("Initializing ST7789 LCD\n");
+
+    _colstart = 0;
+    _rowstart = 0;
 
     // Pulse the reset pin if it exists
     if (this->rst.connected()) {
@@ -138,17 +307,18 @@ void ST7789::init()
           255                               //     255 = max (500 ms) delay
     };
 
-    uint8_t  numCommands, numArgs;
+    uint8_t  cmd, numCommands, numArgs;
     uint16_t ms;
 
     uint8_t index = 0;
     numCommands = init_seq[index++];        // Number of commands to follow
+    THEKERNEL->streams->printf("%i\n",numCommands);
     while (numCommands--) {                 // For each command...
 
-        cs.set(0);
-        if(a0.connected()) a0.set(0);
-        
-        spi->write(init_seq[index++]);      // Read, issue command
+        startWrite();
+
+        cmd = init_seq[index++];
+        writeCommand(cmd);                  // Read, issue command
 
         numArgs  = init_seq[index++];       // Number of args to follow
         ms       = numArgs & ST_CMD_DELAY;  // If hibit set, delay follows args
@@ -156,7 +326,10 @@ void ST7789::init()
         while (numArgs--) {                 // For each argument...
             spi->write(init_seq[index++]);  // Read, issue argument
         }
-        cs.set(1);                          // ST7789 needs chip deselect after each
+        
+        endWrite();                         // ST7789 needs chip deselect after each
+
+        THEKERNEL->streams->printf("Cmd: %x %i\n", cmd, numArgs);
 
         if (ms) {
             ms = init_seq[index++];         // Read post-command delay time (ms)
@@ -164,6 +337,36 @@ void ST7789::init()
             wait_ms(ms);
         }
     }
+
+    setRotation(3);
+
+    getID();
+    getStatus();
+
+    // Invert
+    //startWrite();
+    //writeCommand(ST77XX_INVON);
+    //endWrite();
+
+    //getStatus();
+
+    //// Test shutoff
+    //cs.set(0);
+    //if (a0.connected()) a0.set(0);
+    //spi->write(ST77XX_DISPOFF);
+    //if (a0.connected()) a0.set(1);
+    //cs.set(1);
+
+    //getStatus();
+
+    //// Test shutoff
+    //cs.set(0);
+    //if (a0.connected()) a0.set(0);
+    //spi->write(ST77XX_NORON);
+    //if (a0.connected()) a0.set(1);
+    //cs.set(1);
+
+    //getStatus();
 
     clear();
 }
@@ -175,6 +378,13 @@ void ST7789::display()
 
 void ST7789::clear()
 {
+    startWrite();
+    setAddrWindow(0, 0, LCD_WIDTH, LCD_HEIGHT);
+    for (int i=0; i < (LCD_WIDTH * LCD_HEIGHT); i++) {
+        spi->write(0x00);
+        spi->write(0x00);
+    }
+    endWrite();
 }
 
 void ST7789::home()
