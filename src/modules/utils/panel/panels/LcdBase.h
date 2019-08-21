@@ -76,11 +76,11 @@ class LcdBase {
         /**
          * Sets the mode used for drawing the foreground when printing text. 
          * 
-         * @param c 0: Turn pixels off (AND logic)
+         * @param m 0: Turn pixels off (AND logic)
          *          1: Turn pixels on (OR logic) (default)
          *          2: Invert pixels (XOR logic)
          */
-        virtual void setColor(int c) {};
+        virtual void setDrawMode(int m) {};
 
         /**
         * Turns on/off drawing the background behind text. If on, the background color will be the inverse of the text color.
@@ -95,9 +95,9 @@ class LcdBase {
          * 
          * @param x X coordinate
          * @param y Y coordinate
-         * @param color Mode to use for drawing the pixel (see setColor() for options)
+         * @param mode Mode to use for drawing the pixel (see setDrawMode() for options)
          */
-        virtual void pixel(int x, int y, int color = 1) {};
+        virtual void pixel(int x, int y, int mode = 1) {};
 
         /**
          * Draws a horizontal line.
@@ -105,9 +105,9 @@ class LcdBase {
          * @param x X coordinate of start of line
          * @param y Y coordinate of start of line
          * @param w Width of the line
-         * @param color Mode to use for drawing (see setColor() for options)
+         * @param mode Mode to use for drawing (see setDrawMode() for options)
          */
-        virtual void drawHLine(int x, int y, int w, int color = 1) {};
+        virtual void drawHLine(int x, int y, int w, int mode = 1) {};
 
         /**
          * Draws a vertical line.
@@ -115,9 +115,9 @@ class LcdBase {
          * @param x X coordinate of start of line
          * @param y Y coordinate of start of line
          * @param h Height of the line
-         * @param color Mode to use for drawing (see setColor() for options)
+         * @param mode Mode to use for drawing (see setDrawMode() for options)
          */
-        virtual void drawVLine(int x, int y, int h, int color = 1) {};
+        virtual void drawVLine(int x, int y, int h, int mode = 1) {};
 
         /**
          * Draws a filled rectangle.
@@ -126,9 +126,9 @@ class LcdBase {
          * @param y Y coordinate of top
          * @param w Width of rectangle
          * @param h Height of rectangle
-         * @param color Mode to use for drawing (see setColor() for options)
+         * @param mode Mode to use for drawing (see setDrawMode() for options)
          */
-        virtual void drawBox(int x, int y, int w, int h, int color = 1) {};
+        virtual void drawBox(int x, int y, int w, int h, int mode = 1) {};
 
         // only used on certain panels
         virtual void on_refresh(bool now= false){};

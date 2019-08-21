@@ -406,9 +406,9 @@ void WatchScreen::draw_graphics()
         THEPANEL->lcd->pixel(125, 62);
         THEPANEL->lcd->drawBox(2, 56, (pcnt_played*124)/100, 7);
         THEPANEL->lcd->setCursorPX(55, 56);
-        THEPANEL->lcd->setColor(2);
+        THEPANEL->lcd->setDrawMode(2);
         THEPANEL->lcd->printf("%u%%", pcnt_played);
-        THEPANEL->lcd->setColor(1);
+        THEPANEL->lcd->setDrawMode(1);
     }
 
     THEPANEL->lcd->setBackground(true);

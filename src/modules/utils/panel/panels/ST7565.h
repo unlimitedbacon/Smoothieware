@@ -41,20 +41,20 @@ public:
     //send pic to whole screen
     void send_pic(const unsigned char* data);
     //drawing char
-    int drawChar(int x, int y, unsigned char c, int color, bool bg);
+    int drawChar(int x, int y, unsigned char c, int mode, bool bg);
     // blit a glyph of w pixels wide and h pixels high to x, y. offset pixel position in glyph by x_offset, y_offset.
     // span is the width in bytes of the src bitmap
     // The glyph bytes will be 8 bits of X pixels, msbit->lsbit from top left to bottom right
     void bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span= 0, int x_offset=0, int y_offset=0);
     void renderGlyph(int x, int y, const uint8_t *g, int pixelWidth, int pixelHeight);
-    void drawByte(int index, uint8_t mask, int color);
-    void pixel(int x, int y, int color);
+    void drawByte(int index, uint8_t mask, int mode);
+    void pixel(int x, int y, int mode);
     void setCursorPX(int x, int y);
-    void setColor(int c);
+    void setDrawMode(int c);
     void setBackground(bool bg);
-    void drawHLine(int x, int y, int w, int color);
-    void drawVLine(int x, int y, int h, int color);
-    void drawBox(int x, int y, int w, int h, int color);
+    void drawHLine(int x, int y, int w, int mode);
+    void drawVLine(int x, int y, int h, int mode);
+    void drawBox(int x, int y, int w, int h, int mode);
 
     uint8_t getContrast() { return contrast; }
     void setContrast(uint8_t c);
@@ -82,7 +82,7 @@ private:
 
     // text cursor position
     uint8_t tx, ty;
-    uint8_t text_color = 1;
+    uint8_t text_draw_mode = 1;
     uint8_t contrast;
     struct {
         bool reversed:1;

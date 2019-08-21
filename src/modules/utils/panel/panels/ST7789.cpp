@@ -410,15 +410,15 @@ void ST7789::clear()
     this->ty = 0;
 }
 
-void ST7789::drawHLine(int x, int y, int w, int color) {
+void ST7789::drawHLine(int x, int y, int w, int mode) {
     fillRect(x, y, w, 1, 0xffff);
 }
 
-void ST7789::drawVLine(int x, int y, int h, int color) {
+void ST7789::drawVLine(int x, int y, int h, int mode) {
     fillRect(x, y, 1, h, 0xffff);
 }
 
-void ST7789::drawBox(int x, int y, int w, int h, int color) {
+void ST7789::drawBox(int x, int y, int w, int h, int mode) {
     fillRect(x, y, w, h, 0xffff);
 }
 

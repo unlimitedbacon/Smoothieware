@@ -136,10 +136,10 @@ void PanelScreen::drawWindow(const char* title)
     THEPANEL->lcd->pixel(0, 0, 0);
     THEPANEL->lcd->pixel(127, 0, 0);
     // Print title
-    THEPANEL->lcd->setColor(0);
+    THEPANEL->lcd->setDrawMode(0);
     THEPANEL->lcd->setCursorPX(2, 1);
     THEPANEL->lcd->printf(title);
-    THEPANEL->lcd->setColor(1);
+    THEPANEL->lcd->setDrawMode(1);
 }
 
 void PanelScreen::drawScrollBar(int pos, int vis, int max) {

@@ -192,7 +192,7 @@ void ST7565::clear()
     memset(framebuffer, 0, FB_SIZE);
     this->tx = 0;
     this->ty = 0;
-    this->text_color = 1;
+    this->text_draw_mode = 1;
     this->text_background = true;
 }
 
@@ -241,9 +241,9 @@ void ST7565::setCursorPX(int x, int y)
     this->ty = y;
 }
 
-void ST7565::setColor(int c)
+void ST7565::setDrawMode(int c)
 {
-    this->text_color = c;
+    this->text_draw_mode = c;
 }
 
 void ST7565::setBackground(bool bg)
@@ -352,10 +352,10 @@ void ST7565::setContrast(uint8_t c)
 * @param x   X coordinate
 * @param y   Y coordinate
 * @param c   Character to print
-* @param color Drawing mode for foreground.
+* @param mode Drawing mode for foreground.
 * @param bg  True: Draw background, False: Transparent background)
 */
-int ST7565::drawChar(int x, int y, unsigned char c, int color, bool bg)
+int ST7565::drawChar(int x, int y, unsigned char c, int mode, bool bg)
 {
     int retVal = -1;
     if (c == '\n') {
@@ -372,16 +372,16 @@ int ST7565::drawChar(int x, int y, unsigned char c, int color, bool bg)
                 if (page < LCDPAGES) {
                     int screenIndex = page * LCDWIDTH + x;
                     uint8_t fontByte = glcd_font[(c * 5) + i] << (y % 8);
-                    if (bg) drawByte(screenIndex, 0xFF << (y % 8), !color);
-                    drawByte(screenIndex, fontByte, color);
+                    if (bg) drawByte(screenIndex, 0xFF << (y % 8), !mode);
+                    drawByte(screenIndex, fontByte, mode);
                 }
                 // Draw the second byte
                 page++;
                 if (page < LCDPAGES) {
                     int screenIndex = page * LCDWIDTH + x;
                     uint8_t fontByte = glcd_font[(c * 5) + i] >> (8 - (y % 8));
-                    if (bg) drawByte(screenIndex, 0xFF >> (8 - (y % 8)), !color);
-                    drawByte(screenIndex, fontByte, color);
+                    if (bg) drawByte(screenIndex, 0xFF >> (8 - (y % 8)), !mode);
+                    drawByte(screenIndex, fontByte, mode);
                 }
                 x++;
             }
@@ -396,7 +396,7 @@ int ST7565::drawChar(int x, int y, unsigned char c, int color, bool bg)
 //write single char to screen
 void ST7565::write_char(char value)
 {
-    drawChar(this->tx, this->ty, value, this->text_color, this->text_background);
+    drawChar(this->tx, this->ty, value, this->text_draw_mode, this->text_background);
 }
 
 void ST7565::write(const char *line, int len)
@@ -486,34 +486,34 @@ void ST7565::renderGlyph(int x, int y, const uint8_t *g, int w, int h)
     }
 }
 
-void ST7565::drawByte(int index, uint8_t mask, int color)
+void ST7565::drawByte(int index, uint8_t mask, int mode)
 {
-    if (color == 1) {
+    if (mode == 1) {
         framebuffer[index] |= mask;
-    } else if (color == 0) {
+    } else if (mode == 0) {
         framebuffer[index] &= ~mask;
     } else {
         framebuffer[index] ^= mask;
     }
 }
 
-void ST7565::pixel(int x, int y, int color)
+void ST7565::pixel(int x, int y, int mode)
 {
     int page = y / 8;
     unsigned char mask = 1 << (y % 8);
-    drawByte(page * LCDWIDTH + x, mask, color);
+    drawByte(page * LCDWIDTH + x, mask, mode);
 }
 
-void ST7565::drawHLine(int x, int y, int w, int color)
+void ST7565::drawHLine(int x, int y, int w, int mode)
 {
     int page = y / 8;
     uint8_t mask = 1 << (y % 8);
     for (int i = 0; i < w; i++) {
-        drawByte(page * LCDWIDTH + x + i, mask, color);
+        drawByte(page * LCDWIDTH + x + i, mask, mode);
     }
 }
 
-void ST7565::drawVLine(int x, int y, int h, int color){
+void ST7565::drawVLine(int x, int y, int h, int mode){
     int page = y / 8;
     if (page >= LCDPAGES) return;
     // First byte. Start with all on and shift to turn of the
@@ -525,26 +525,26 @@ void ST7565::drawVLine(int x, int y, int h, int color){
     if (h < 8) {
         mask &= 0xff >> (8 - (startbit + h));
     }
-    drawByte(page * LCDWIDTH + x, mask, color);
+    drawByte(page * LCDWIDTH + x, mask, mode);
     h -= 8 - (y % 8);
     // Draw any completely filled bytes along the line
     while (h > 8) {
         page++;
         if (page >= LCDPAGES) return;
         mask = 0xff;
-        drawByte(page * LCDWIDTH + x, mask, color);
+        drawByte(page * LCDWIDTH + x, mask, mode);
         h -= 8;
     }
     page++;
     if (page >= LCDPAGES) return;
     // Last byte. Start filled and shift by 8 - number of pixels remaining
     mask = 0xff >> (8 - h);
-    drawByte(page * LCDWIDTH + x, mask, color);
+    drawByte(page * LCDWIDTH + x, mask, mode);
 }
 
-void ST7565::drawBox(int x, int y, int w, int h, int color) {
+void ST7565::drawBox(int x, int y, int w, int h, int mode) {
     for (int i = 0; i < w; i++) {
-        drawVLine(x + i, y, h, color);
+        drawVLine(x + i, y, h, mode);
     }
 }
 

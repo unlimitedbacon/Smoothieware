@@ -59,9 +59,9 @@ class ST7789 : public LcdBase {
 
         // Graphics functions
         void clear();
-        void drawHLine(int x, int y, int w, int color);
-        void drawVLine(int x, int y, int h, int color);
-        void drawBox(int x, int y, int w, int h, int color);
+        void drawHLine(int x, int y, int w, int mode);
+        void drawVLine(int x, int y, int h, int mode);
+        void drawBox(int x, int y, int w, int h, int mode);
         void bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span= 0, int x_offset=0, int y_offset=0);
 
         // Text functions
