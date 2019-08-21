@@ -39,7 +39,7 @@ ST7789::ST7789()
 
     this->spi = new mbed::SPI(mosi, miso, sclk);
     // Should see if we can run this any faster. Find out maximum speed for lpc1769
-    this->spi->frequency(THEKERNEL->config->value(panel_checksum, spi_frequency_checksum)->by_default(16000000)->as_number()); //4Mhz freq, can try go a little lower
+    this->spi->frequency(THEKERNEL->config->value(panel_checksum, spi_frequency_checksum)->by_default(SPI_DEFAULT_FREQ)->as_number()); //4Mhz freq, can try go a little lower
     this->spi->format(8, 0);
 
     // Chip Select Pin
@@ -420,6 +420,23 @@ void ST7789::drawVLine(int x, int y, int h, int color) {
 
 void ST7789::drawBox(int x, int y, int w, int h, int color) {
     fillRect(x, y, w, h, 0xffff);
+}
+
+void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span, int x_offset, int y_offset) {
+    startWrite();
+    setAddrWindow(x, y, w, h);
+    for (int gy = 0; gy < h; gy++) {
+        for (int gx = 0; gx < w; gx++) {
+            uint8_t glyphByte = glyph[gy] << gx;
+            if (glyphByte & 0x80) {
+                spi->write(0xff);
+                spi->write(0xff);
+            } else {
+                spi->write(0x00);
+                spi->write(0x00);
+            }
+        }
+    }
 }
 
 // Draw a character
