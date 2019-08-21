@@ -423,11 +423,19 @@ void ST7789::drawBox(int x, int y, int w, int h, int color) {
 }
 
 void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span, int x_offset, int y_offset) {
+    int rowBytes;
+    if (span) {
+        rowBytes = span;
+    } else {
+        rowBytes = w / 8;
+        if (w % 8) rowBytes++;
+    }
+
     startWrite();
     setAddrWindow(x, y, w, h);
-    for (int gy = 0; gy < h; gy++) {
-        for (int gx = 0; gx < w; gx++) {
-            uint8_t glyphByte = glyph[gy] << gx;
+    for (int gy = y_offset; gy < (h + y_offset); gy++) {
+        for (int gx = x_offset; gx < (w + x_offset); gx++) {
+            uint8_t glyphByte = glyph[gy * rowBytes + (gx / 8)] << (gx % 8);
             if (glyphByte & 0x80) {
                 spi->write(0xff);
                 spi->write(0xff);
@@ -437,6 +445,7 @@ void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span
             }
         }
     }
+    endWrite();
 }
 
 // Draw a character
