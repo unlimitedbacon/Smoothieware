@@ -27,7 +27,7 @@ ST7789::ST7789()
 {
     // SPI Comm
     // Select which SPI channel to use
-    int spi_channel = THEKERNEL->config->value(panel_checksum, spi_channel_checksum)->by_default(0)->as_number();
+    int spi_channel = THEKERNEL->config->value(panel_checksum, spi_channel_checksum)->by_default(0)->as_int();
     PinName mosi, miso, sclk;
     if(spi_channel == 0) {
         mosi = P0_18; miso = P0_17; sclk = P0_15;
@@ -39,7 +39,8 @@ ST7789::ST7789()
 
     this->spi = new mbed::SPI(mosi, miso, sclk);
     // Should see if we can run this any faster. Find out maximum speed for lpc1769
-    this->spi->frequency(THEKERNEL->config->value(panel_checksum, spi_frequency_checksum)->by_default(SPI_DEFAULT_FREQ)->as_number()); //4Mhz freq, can try go a little lower
+    this->spi->frequency(THEKERNEL->config->value(panel_checksum, spi_frequency_checksum)->by_default(SPI_DEFAULT_FREQ)->as_int()); //4Mhz freq, can try go a little lower
+    //this->spi->frequency(32000000);
     this->spi->format(8, 0);
 
     // Chip Select Pin
