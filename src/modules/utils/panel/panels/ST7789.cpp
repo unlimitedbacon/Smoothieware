@@ -3,6 +3,7 @@
 #include "checksumm.h"
 #include "Config.h"
 #include "ConfigValue.h"
+#include "glcdfont.h"
 #include "Kernel.h"
 #include "StreamOutputPool.h"
 
@@ -159,8 +160,8 @@ void ST7789::setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h)
 
     uint16_t x1 = x + _xstart;
     uint16_t y1 = y + _ystart;
-    uint16_t x2 = x1 + w;
-    uint16_t y2 = y1 + h;
+    uint16_t x2 = x1 + w - 1;
+    uint16_t y2 = y1 + h - 1;
 
     writeCommand(ST77XX_CASET); // Column addr set
     spi->write((uint8_t)(x1 >> 8));
@@ -376,15 +377,92 @@ void ST7789::display()
     // Nothing
 }
 
-void ST7789::clear()
-{
+/*!
+    @brief  Draw a filled rectangle to the display. Self-contained and
+            provides its own transaction as needed (see writeFillRect() or
+            writeFillRectPreclipped() for lower-level variants). Edge
+            clipping and rejection is performed here.
+    @param  x      Horizontal position of first corner.
+    @param  y      Vertical position of first corner.
+    @param  w      Rectangle width in pixels (positive = right of first
+                   corner, negative = left of first corner).
+    @param  h      Rectangle height in pixels (positive = below first
+                   corner, negative = above first corner).
+    @param  color  16-bit fill color in '565' RGB format.
+*/
+void ST7789::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) {
+    uint8_t c1 = color >> 8;
+    uint8_t c2 = color & 0xff;
+
     startWrite();
-    setAddrWindow(0, 0, LCD_WIDTH, LCD_HEIGHT);
-    for (int i=0; i < (LCD_WIDTH * LCD_HEIGHT); i++) {
-        spi->write(0x00);
-        spi->write(0x00);
+    setAddrWindow(x, y, w, h);
+    for (int i=0; i < (w * h); i++) {
+        spi->write(c1);
+        spi->write(c2);
     }
     endWrite();
+}
+
+void ST7789::clear()
+{
+    fillRect(0, 0, LCD_WIDTH, LCD_HEIGHT, 0x0000);
+    this->tx = 0;
+    this->ty = 0;
+}
+
+void ST7789::drawHLine(int x, int y, int w, int color) {
+    fillRect(x, y, w, 1, 0xffff);
+}
+
+void ST7789::drawVLine(int x, int y, int h, int color) {
+    fillRect(x, y, 1, h, 0xffff);
+}
+
+void ST7789::drawBox(int x, int y, int w, int h, int color) {
+    fillRect(x, y, w, h, 0xffff);
+}
+
+// Draw a character
+/**************************************************************************/
+/*!
+   @brief   Draw a single character
+    @param    x   Bottom left corner x coordinate
+    @param    y   Bottom left corner y coordinate
+    @param    c   The 8-bit font-indexed character (likely ascii)
+    @param    color 16-bit 5-6-5 Color to draw character with
+    @param    bg 16-bit 5-6-5 Color to fill background with (if same as color, no background)
+*/
+/**************************************************************************/ 
+void ST7789::drawChar(int x, int y, unsigned char c, uint16_t color, uint16_t bg) {
+    if (c == '\n') {
+        this->ty += 8;
+    } else if (c == '\r') {
+    } else {
+        uint8_t c1 = color >> 8;
+        uint8_t c2 = color & 0xff;
+        uint8_t b1 = bg >> 8;
+        uint8_t b2 = bg & 0xff;
+
+        startWrite();
+        setAddrWindow(x, y, 6, 8);
+        for (uint8_t fx = 0; fx < 8; fx++) {
+            for (uint8_t fy = 0; fy < 5; fy++) {
+                uint8_t fontByte = glcd_font[(c * 5) + fy] >> fx;
+                if (fontByte & 1) {
+                    spi->write(c1);
+                    spi->write(c2);
+                } else {
+                    spi->write(b1);
+                    spi->write(b2);
+                }
+            }
+            spi->write(b1);
+            spi->write(b2);
+        }
+
+        endWrite();
+        this->tx += 6;
+    }
 }
 
 void ST7789::home()
@@ -396,11 +474,20 @@ void ST7789::home()
 void ST7789::setCursor(uint8_t col, uint8_t row)
 {
     this->tx = col * FONT_WIDTH;
-    this->ty = col * FONT_HEIGHT;
+    this->ty = row * FONT_HEIGHT;
+}
+
+void ST7789::setCursorPX(int x, int y)
+{
+    this->tx = x;
+    this->ty = y;
 }
 
 void ST7789::write(const char* line, int len)
 {
+    for (int i = 0; i < len; ++i) {
+        drawChar(this->tx, this->ty, line[i], 0xffff, 0x0000);
+    }
 }
 
 uint8_t ST7789::readButtons()

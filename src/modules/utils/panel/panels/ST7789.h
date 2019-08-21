@@ -51,16 +51,22 @@ class ST7789 : public LcdBase {
         ST7789();
         ~ST7789();
 
-        // Required functions
+        // Base functions
         void init();
         void display();
+        bool hasGraphics() { return true; }
+        bool hasFullGraphics() { return true; }
 
         // Graphics functions
         void clear();
+        void drawHLine(int x, int y, int w, int color);
+        void drawVLine(int x, int y, int h, int color);
+        void drawBox(int x, int y, int w, int h, int color);
 
         // Text functions
         void home();
         void setCursor(uint8_t col, uint8_t row);
+        void setCursorPX(int x, int y);
         void write(const char* line, int len);
 
         // Physical Controls
@@ -77,6 +83,10 @@ class ST7789 : public LcdBase {
         void setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h);
         void getID();
         void getStatus();
+
+        // Intermediate graphics functions
+        void fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
+        void drawChar(int x, int y, unsigned char c, uint16_t color, uint16_t bg);
 
         mbed::SPI* spi;
 

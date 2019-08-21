@@ -6,7 +6,7 @@
  */
 
 #include "ST7565.h"
-#include "ST7565/glcdfont.h"
+#include "glcdfont.h"
 #include "Kernel.h"
 #include "platform_memory.h"
 #include "Config.h"
