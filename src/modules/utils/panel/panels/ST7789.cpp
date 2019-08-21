@@ -408,21 +408,28 @@ void ST7789::clear()
     fillRect(0, 0, LCD_WIDTH, LCD_HEIGHT, 0x0000);
     this->tx = 0;
     this->ty = 0;
+    this->fgColor = 0xffff;
+    this->bgColor = 0x0000;
 }
 
 void ST7789::drawHLine(int x, int y, int w, int mode) {
-    fillRect(x, y, w, 1, 0xffff);
+    fillRect(x, y, w, 1, this->fgColor);
 }
 
 void ST7789::drawVLine(int x, int y, int h, int mode) {
-    fillRect(x, y, 1, h, 0xffff);
+    fillRect(x, y, 1, h, this->fgColor);
 }
 
 void ST7789::drawBox(int x, int y, int w, int h, int mode) {
-    fillRect(x, y, w, h, 0xffff);
+    fillRect(x, y, w, h, this->fgColor);
 }
 
 void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span, int x_offset, int y_offset) {
+    uint8_t c1 = this->fgColor >> 8;
+    uint8_t c2 = this->fgColor & 0xff;
+    uint8_t b1 = this->bgColor >> 8;
+    uint8_t b2 = this->bgColor & 0xff;
+
     int rowBytes;
     if (span) {
         rowBytes = span;
@@ -437,15 +444,23 @@ void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span
         for (int gx = x_offset; gx < (w + x_offset); gx++) {
             uint8_t glyphByte = glyph[gy * rowBytes + (gx / 8)] << (gx % 8);
             if (glyphByte & 0x80) {
-                spi->write(0xff);
-                spi->write(0xff);
+                spi->write(c1);
+                spi->write(c2);
             } else {
-                spi->write(0x00);
-                spi->write(0x00);
+                spi->write(b1);
+                spi->write(b2);
             }
         }
     }
     endWrite();
+}
+
+void ST7789::setColor(uint16_t c) {
+    this->fgColor = c;
+}
+
+void ST7789::setBackgroundColor(uint16_t c) {
+    this->bgColor = c;
 }
 
 // Draw a character
@@ -512,7 +527,7 @@ void ST7789::setCursorPX(int x, int y)
 void ST7789::write(const char* line, int len)
 {
     for (int i = 0; i < len; ++i) {
-        drawChar(this->tx, this->ty, line[i], 0xffff, 0x0000);
+        drawChar(this->tx, this->ty, line[i], this->fgColor, this->bgColor);
     }
 }
 

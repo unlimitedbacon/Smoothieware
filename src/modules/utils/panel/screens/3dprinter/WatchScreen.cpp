@@ -341,11 +341,15 @@ void WatchScreen::draw_graphics()
             y = 11 + (row * (icon_height+1));
             THEPANEL->lcd->setCursorPX(x + icon_width + 1, y);
             if (temp.designator.front() == 'T') {
+                THEPANEL->lcd->setColor(0xf800);
                 THEPANEL->lcd->bltGlyph(x, y, icon_width, icon_height, hotend_icon);
+                THEPANEL->lcd->setColor(0xffff);
                 THEPANEL->lcd->printf("%d/%d\xf8", t, tt);
                 row++;
             } else if (temp.designator.front() == 'B') {
+                THEPANEL->lcd->setColor(0xf800);
                 THEPANEL->lcd->bltGlyph(x, y, icon_width, icon_height, bed_icon);
+                THEPANEL->lcd->setColor(0xffff);
                 THEPANEL->lcd->printf("%d/%d\xf8", t, tt);
                 row++;
             }
@@ -355,7 +359,9 @@ void WatchScreen::draw_graphics()
     // Print the fan speed
     if (this->has_fan) {
         y = 11 + (row * (icon_height+1));
+        THEPANEL->lcd->setColor(0x001f);
         THEPANEL->lcd->bltGlyph(x, y, icon_width, icon_height, fan_icon);
+        THEPANEL->lcd->setColor(0xffff);
         THEPANEL->lcd->setCursorPX(x + icon_width +1, y);
         //THEPANEL->lcd->printf("%i%%", (this->fan_speed*100)/255);
         THEPANEL->lcd->printf("%s", this->fan_state? "On" : "Off");
@@ -366,12 +372,15 @@ void WatchScreen::draw_graphics()
     row = 0;
     x = 64;
 
+    uint16_t rgbColors[] = {0xf800, 0x07e0, 0x001f};
     // Print the current coordinates
     for (int i=0; i<3; i++) {
         y = 11 + (row * (icon_height + 1));
         char axis = 'X' + i;
         THEPANEL->lcd->setCursorPX(x, y);
+        THEPANEL->lcd->setColor(rgbColors[i]);
         THEPANEL->lcd->printf("%c", axis);
+        THEPANEL->lcd->setColor(0xffff);
         THEPANEL->lcd->setCursorPX(x + icon_width +1, y);
         THEPANEL->lcd->printf("%.2f", this->pos[i]);
         row++;

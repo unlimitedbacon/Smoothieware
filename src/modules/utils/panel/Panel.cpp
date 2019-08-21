@@ -389,7 +389,9 @@ void Panel::idle_processing()
 
         if (this->lcd->hasGraphics()) {
             //this->lcd->bltGlyph(24, 40, ohw_logo_antipixel_width, ohw_logo_antipixel_height, ohw_logo_antipixel_bits);
+            this->lcd->setColor(0x001f);
             this->lcd->bltGlyph(12, 15, boot_logo_width, boot_logo_height, boot_logo_bits);
+            this->lcd->setColor(0xffff);
             this->lcd->setCursorPX(51, 46); this->lcd->printf("%s", model.c_str());
             this->lcd->setCursorPX(51, 54); this->lcd->printf("%s", name.c_str());
         } else {

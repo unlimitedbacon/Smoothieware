@@ -91,6 +91,26 @@ class LcdBase {
         virtual void setBackground(bool bg) {};
 
         /**
+         * Sets the color used for all drawing operations.
+         * Only works on color (RGB) screens. Has no effect on monochrome screens.
+         * Takes a 16 bit RGB 5-6-5 color value. 5 Red bits, 6 Green bits, 5 Blue bits.
+         * Red:   0xf800
+         * Green: 0x07e0
+         * Blue:  0x001f
+         * 
+         * @param c 16 bit RGB 5-6-5 color value.
+         */
+        virtual void setColor(uint16_t c) {};
+
+        /**
+         * Sets the background color used for all drawing operations with background pixels.
+         * Only works on color (RGB) screens. Has no effect on monochrome screens.
+         * 
+         * @param c Takes a 16 bit RGB 5-6-5 color value. 5 Red bits, 6 Green bits, 5 Blue bits.
+         */
+        virtual void setBackgroundColor(uint16_t c) {};
+
+        /**
          * Turns on/off a specific pixel on the display. The screen origin (0,0) is at the top left of the display.
          * 
          * @param x X coordinate
