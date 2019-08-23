@@ -18,6 +18,13 @@
 #define spi_frequency_checksum     CHECKSUM("spi_frequency")
 #define rst_pin_checksum           CHECKSUM("rst_pin")
 #define a0_pin_checksum            CHECKSUM("a0_pin")
+#define click_button_pin_checksum  CHECKSUM("click_button_pin")
+#define back_button_pin_checksum   CHECKSUM("back_button_pin")
+#define pause_button_pin_checksum  CHECKSUM("pause_button_pin")
+#define encoder_a_pin_checksum     CHECKSUM("encoder_a_pin")
+#define encoder_b_pin_checksum     CHECKSUM("encoder_b_pin")
+#define buzz_pin_checksum          CHECKSUM("buzz_pin")
+#define led_pin_checksum           CHECKSUM("led_pin")
 
 #define SPI_DEFAULT_FREQ        16000000 ///< Default SPI data clock frequency
 #define ST7789_240x240_XSTART   0
@@ -55,6 +62,16 @@ ST7789::ST7789()
     this->a0.from_string(THEKERNEL->config->value( panel_checksum, a0_pin_checksum)->by_default("nc")->as_string())->as_output();
     if(a0.connected()) a0.set(1);
 
+    // Setup Controls
+    this->click_pin.from_string(THEKERNEL->config->value( panel_checksum, click_button_pin_checksum )->by_default("nc")->as_string())->as_input();
+    this->back_pin.from_string(THEKERNEL->config->value( panel_checksum, back_button_pin_checksum )->by_default("nc")->as_string())->as_input();
+    this->pause_pin.from_string(THEKERNEL->config->value( panel_checksum, pause_button_pin_checksum )->by_default("nc")->as_string())->as_input();
+    this->encoder_a_pin.from_string(THEKERNEL->config->value( panel_checksum, encoder_a_pin_checksum)->by_default("nc")->as_string())->as_input();
+    this->encoder_b_pin.from_string(THEKERNEL->config->value( panel_checksum, encoder_b_pin_checksum)->by_default("nc")->as_string())->as_input();
+
+    // Lights and Buzzer
+    this->buzz_pin.from_string(THEKERNEL->config->value( panel_checksum, buzz_pin_checksum)->by_default("nc")->as_string())->as_output();
+    this->led_pin.from_string(THEKERNEL->config->value( panel_checksum, led_pin_checksum)->by_default("nc")->as_string())->as_output();
 }
 
 ST7789::~ST7789()
@@ -534,10 +551,48 @@ void ST7789::write(const char* line, int len)
 
 uint8_t ST7789::readButtons()
 {
-    return 0;
+    uint8_t state = 0;
+    state |= (this->click_pin.get() ? BUTTON_SELECT : 0);
+    state |= (this->back_pin.get() ? BUTTON_LEFT : 0);
+    state |= (this->pause_pin.get() ? BUTTON_PAUSE : 0);
+    return state;
 }
 
 int ST7789::readEncoderDelta()
 {
-    return 0;
+    static int8_t enc_states[] = {0, -1, 1, 0, 1, 0, 0, -1, -1, 0, 0, 1, 0, 1, -1, 0};
+    static uint8_t old_AB = 0;
+    if (this->encoder_a_pin.connected()) {
+        // mviki
+        old_AB <<= 2;                   //remember previous state
+        old_AB |= ( this->encoder_a_pin.get() + ( this->encoder_b_pin.get() * 2 ) );  //add current state
+        return  enc_states[(old_AB & 0x0f)];
+
+    } else {
+        return 0;
+    }
+}
+
+// cycle the buzzer pin at a certain frequency (hz) for a certain duration (ms)
+void ST7789::buzz(long duration, uint16_t freq)
+{
+    if(!this->buzz_pin.connected()) return;
+
+    duration *= 1000; //convert from ms to us
+    long period = 1000000 / freq; // period in us
+    long elapsed_time = 0;
+    while (elapsed_time < duration) {
+        this->buzz_pin.set(1);
+        wait_us(period / 2);
+        this->buzz_pin.set(0);
+        wait_us(period / 2);
+        elapsed_time += (period);
+    }
+}
+
+void ST7789::setLed(int led, bool onoff)
+{
+    if(led == LED_HOT) {
+        led_pin.set(onoff);
+    }
 }

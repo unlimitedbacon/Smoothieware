@@ -56,6 +56,7 @@ class ST7789 : public LcdBase {
         void display();
         bool hasGraphics() { return true; }
         bool hasFullGraphics() { return true; }
+        uint16_t get_screen_lines() { return 6; }
 
         // Graphics functions
         void clear();
@@ -76,6 +77,8 @@ class ST7789 : public LcdBase {
         uint8_t readButtons();
         int readEncoderDelta();
         int getEncoderResolution() { return 4; };
+        void buzz(long duration, uint16_t freq);
+        void setLed(int led, bool onoff);
 
     private:
         // Driver functions
@@ -93,10 +96,19 @@ class ST7789 : public LcdBase {
 
         mbed::SPI* spi;
 
-        // Pins
+        // LCD Pins
         Pin cs;
         Pin rst;
         Pin a0;
+        // Control pins
+        Pin click_pin;
+        Pin back_pin;
+        Pin pause_pin;
+        Pin encoder_a_pin;
+        Pin encoder_b_pin;
+        // Lights and buzzer
+        Pin buzz_pin;
+        Pin led_pin;
 
         // Text drawing state
         int tx, ty;
