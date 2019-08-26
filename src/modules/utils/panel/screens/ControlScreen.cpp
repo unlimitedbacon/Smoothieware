@@ -37,7 +37,7 @@ void ControlScreen::on_enter()
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(4);
     get_current_pos(this->pos); // gets current WCS
-    this->refresh_menu();
+    this->refresh_menu(true);
     this->pos_changed = false;
 }
 

@@ -66,7 +66,7 @@ void FileScreen::enter_folder(const char *folder)
     THEPANEL->enter_menu_mode();
 
     // Display menu
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 // Called by the panel when refreshing the menu, display .. then all files in the current dir

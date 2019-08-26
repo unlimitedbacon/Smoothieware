@@ -31,18 +31,73 @@ void PanelScreen::on_enter() {}
 void PanelScreen::refresh_menu(bool clear)
 {
     if (THEPANEL->lcd->hasFullGraphics() ) {
-        THEPANEL->lcd->clear();
-        this->drawWindow(this->getTitle());
-        for (uint16_t i = THEPANEL->menu_start_line; i < THEPANEL->menu_start_line + min( THEPANEL->menu_rows, THEPANEL->panel_lines ); i++ ) {
-            THEPANEL->lcd->setCursorPX(2, 10 + 9 * (i - THEPANEL->menu_start_line) );
-            this->display_menu_line(i);
-        }
-        // Draw scroll bar
-        if (THEPANEL->menu_rows > THEPANEL->panel_lines) {
-            this->drawScrollBar(THEPANEL->menu_start_line, THEPANEL->panel_lines, THEPANEL->menu_rows);
-            THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 121, 9, 2);
+        if (clear) {
+            // Wipe and redraw the whole screen
+            THEPANEL->lcd->clear();
+            this->drawWindow(this->getTitle());
+            // Draw scroll bar and highlighted line
+            if (THEPANEL->menu_rows > THEPANEL->panel_lines) {
+                this->drawScrollBar(THEPANEL->menu_start_line, THEPANEL->panel_lines, THEPANEL->menu_rows);
+                THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 121, 9, 2);
+            } else {
+                THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 126, 9, 2);
+            }
+            // Print menu options
+            for (uint16_t i = THEPANEL->menu_start_line; i < THEPANEL->menu_start_line + min( THEPANEL->menu_rows, THEPANEL->panel_lines ); i++ ) {
+                THEPANEL->lcd->setCursorPX(2, 10 + 9 * (i - THEPANEL->menu_start_line) );
+                if (i == THEPANEL->menu_current_line) THEPANEL->lcd->setDrawMode(0);
+                this->display_menu_line(i);
+                THEPANEL->lcd->setDrawMode(1);
+            }
         } else {
-            THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 126, 9, 2);
+            // Only redraw differences
+            if (THEPANEL->menu_start_line != THEPANEL->last_menu_start_line) {
+                // Redraw entire text area
+                // Draw scroll bar and highlighted line
+                if (THEPANEL->menu_rows > THEPANEL->panel_lines) {
+                    this->drawScrollBar(THEPANEL->menu_start_line, THEPANEL->panel_lines, THEPANEL->menu_rows);
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 121, 9, 2);
+                } else {
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 126, 9, 2);
+                }
+                // Print menu options
+                for (uint16_t i = THEPANEL->menu_start_line; i < THEPANEL->menu_start_line + min( THEPANEL->menu_rows, THEPANEL->panel_lines ); i++ ) {
+                    THEPANEL->lcd->setCursorPX(2, 10 + 9 * (i - THEPANEL->menu_start_line) );
+                    if (i == THEPANEL->menu_current_line) {
+                        THEPANEL->lcd->setDrawMode(0);
+                        this->display_menu_line(i);
+                        THEPANEL->lcd->setDrawMode(1);
+                    } else {
+                        // Pad the rest of the line
+                        THEPANEL->lcd->drawHLine(1, 9 + 9 * (i - THEPANEL->menu_start_line), 121, 0);
+                        THEPANEL->lcd->drawVLine(1, 9 + 9 * (i - THEPANEL->menu_start_line), 9, 0);
+                        this->display_menu_line(i);
+                        int x = THEPANEL->lcd->getCursorX();
+                        int y = THEPANEL->lcd->getCursorY();
+                        THEPANEL->lcd->drawBox(x, y, 122-x, 8, 0);
+                    }
+                }
+            } else if (THEPANEL->menu_current_line != THEPANEL->menu_last_line) {
+                // Redraw only the current and last lines
+                // Draw scroll bar and highlighted line
+                if (THEPANEL->menu_rows > THEPANEL->panel_lines) {
+                    this->drawScrollBar(THEPANEL->menu_start_line, THEPANEL->panel_lines, THEPANEL->menu_rows);
+                    // Un-highlight previously selected line
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_last_line - THEPANEL->menu_start_line), 121, 9, 0);
+                    // Highlight new line
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 121, 9, 1);
+                } else {
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_last_line - THEPANEL->menu_start_line), 126, 9, 0);
+                    THEPANEL->lcd->drawBox(1, 9 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line), 126, 9, 1);
+                }
+                // Draw text
+                THEPANEL->lcd->setCursorPX(2, 10 + 9 * (THEPANEL->menu_last_line - THEPANEL->menu_start_line) );
+                this->display_menu_line(THEPANEL->menu_last_line);
+                THEPANEL->lcd->setCursorPX(2, 10 + 9 * (THEPANEL->menu_current_line - THEPANEL->menu_start_line) );
+                THEPANEL->lcd->setDrawMode(0);
+                this->display_menu_line(THEPANEL->menu_current_line);
+                THEPANEL->lcd->setDrawMode(1);
+            }
         }
     } else {
         if (clear) THEPANEL->lcd->clear();
@@ -53,6 +108,9 @@ void PanelScreen::refresh_menu(bool clear)
         THEPANEL->lcd->setCursor(0, THEPANEL->menu_current_line - THEPANEL->menu_start_line );
         THEPANEL->lcd->printf(">");
     }
+
+    THEPANEL->last_menu_start_line = THEPANEL->menu_start_line;
+    THEPANEL->menu_last_line = THEPANEL->menu_current_line;
 }
 
 void PanelScreen::refresh_screen(bool clear)
@@ -145,7 +203,14 @@ void PanelScreen::drawWindow(const char* title)
 void PanelScreen::drawScrollBar(int pos, int vis, int max) {
     int top = 10 + (52 * pos) / max;
     int len = 52 * vis / max;
+    int bottom = top + len;
     if (52 * vis % max > 0) len++;
+    // Border
     THEPANEL->lcd->drawVLine(122, 9, 54);
+    // Blank area above bar
+    THEPANEL->lcd->drawBox(124, 10, 2, top-10, 0);
+    // Bar
     THEPANEL->lcd->drawBox(124, top, 2, len);
+    // Blank are below bar
+    THEPANEL->lcd->drawBox(124, bottom+1, 2, 62 - bottom-1, 0);
 }

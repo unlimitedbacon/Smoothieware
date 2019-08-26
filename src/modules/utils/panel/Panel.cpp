@@ -562,6 +562,8 @@ void Panel::setup_menu(uint16_t rows, uint16_t lines, bool reset_pos)
         this->menu_selected_line = 0;
         this->menu_current_line = 0;
         this->menu_start_line = 0;
+        this->menu_last_line = 0;
+        this->last_menu_start_line = 0;
     }
     this->menu_rows = rows;
     this->panel_lines = lines;
@@ -589,6 +591,7 @@ void Panel::menu_update()
     this->menu_selected_line = msl; // update atomically we hope
     // figure out which actual line to select, if we have a menu offset it means we want to move one line per two clicks
     if(msl % (this->menu_offset+1) == 0) { // only if divisible by offset
+        this->menu_last_line = this->menu_current_line;
         this->menu_current_line = msl >> this->menu_offset;
     }
 
@@ -607,18 +610,23 @@ void Panel::menu_update()
         // do we want to scroll up?
         int sl= this->menu_current_line - this->menu_start_line; // screen line we are on
         if(sl >= this->panel_lines) {
+            this->last_menu_start_line = this->menu_start_line;
             this->menu_start_line += ((sl+1)-this->panel_lines); // scroll up to keep it on the screen
 
         }else if(sl < 0 ) { // do we want to scroll down?
+            this->last_menu_start_line = this->menu_start_line;
             this->menu_start_line += sl; // scroll down
         }
         #endif
 
     }else{
+        this->last_menu_start_line = this->menu_start_line;
         this->menu_start_line = 0;
     }
 
-    this->menu_changed = true;
+    if ((this->menu_current_line != this->menu_last_line) | (this->menu_start_line != this->last_menu_start_line)) {
+        this->menu_changed = true;
+    }
 }
 
 bool Panel::menu_change()

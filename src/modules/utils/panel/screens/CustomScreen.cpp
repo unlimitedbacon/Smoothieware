@@ -52,7 +52,7 @@ void CustomScreen::on_enter()
 {
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(menu_items.size() + 1);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void CustomScreen::on_refresh()

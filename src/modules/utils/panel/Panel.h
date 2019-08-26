@@ -115,9 +115,13 @@ class Panel : public Module {
 
         // Menu
         int menu_selected_line;
+        int menu_current_line;
         int menu_start_line;
         int menu_rows;
         int panel_lines;
+        // Previous menu state
+        int last_menu_start_line;
+        int menu_last_line;
 
         // Control
         float normal_increment;
@@ -152,7 +156,6 @@ class Panel : public Module {
 
         volatile struct {
             uint16_t screen_lines:16;
-            uint16_t menu_current_line:16;
             uint8_t extsd_spi_channel:8;
 
             bool start_up:1;

@@ -30,7 +30,7 @@ void JogScreen::on_enter()
 {
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(5);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void JogScreen::on_refresh()

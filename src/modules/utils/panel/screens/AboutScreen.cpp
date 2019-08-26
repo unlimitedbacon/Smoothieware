@@ -48,7 +48,7 @@ void AboutScreen::on_enter()
 
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(i);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void AboutScreen::on_refresh()

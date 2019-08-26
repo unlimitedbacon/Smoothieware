@@ -25,7 +25,7 @@ void WCSScreen::on_enter()
 {
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(MAX_WCS+1);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void WCSScreen::on_refresh()

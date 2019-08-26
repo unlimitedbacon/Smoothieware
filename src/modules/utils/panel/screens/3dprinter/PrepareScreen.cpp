@@ -40,7 +40,7 @@ void PrepareScreen::on_enter()
     THEPANEL->enter_menu_mode();
     // if no heaters or extruder then don't show related menu items
     THEPANEL->setup_menu((this->extruder_screen != nullptr) ? 9 : 5);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void PrepareScreen::on_refresh()

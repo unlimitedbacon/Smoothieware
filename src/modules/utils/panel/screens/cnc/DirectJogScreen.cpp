@@ -35,7 +35,7 @@ void DirectJogScreen::on_enter()
     THEPANEL->enter_menu_mode();
     mode= MULTIPLIER;
     THEPANEL->setup_menu(7);
-    this->refresh_menu();
+    this->refresh_menu(true);
     this->pos_changed = false;
     get_actuator_pos();
 }

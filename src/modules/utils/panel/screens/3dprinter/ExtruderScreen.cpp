@@ -32,7 +32,7 @@ void ExtruderScreen::on_enter()
 {
     THEPANEL->enter_menu_mode();
     THEPANEL->setup_menu(4);
-    this->refresh_menu();
+    this->refresh_menu(true);
 }
 
 void ExtruderScreen::on_refresh()

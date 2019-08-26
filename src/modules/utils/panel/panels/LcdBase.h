@@ -74,6 +74,18 @@ class LcdBase {
         virtual void setCursorPX(int x, int y) {};
 
         /**
+         * Gets the current exact X coordinate of the text cursor on graphical displays.
+         * Not used for text-only displays
+         */
+        virtual int getCursorX() {return 0;};
+
+        /**
+         * Gets the current exact Y coordinate of the text cursor on graphical displays.
+         * Not used for text-only displays
+         */
+        virtual int getCursorY() {return 0;};
+
+        /**
          * Sets the mode used for drawing the foreground when printing text. 
          * 
          * @param m 0: Turn pixels off (AND logic)

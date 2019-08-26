@@ -318,7 +318,7 @@ void WatchScreen::redraw()
 
 void WatchScreen::draw_graphics()
 {
-    THEPANEL->lcd->clear();
+    //THEPANEL->lcd->clear();
     THEPANEL->lcd->setBackground(false);
 
     // Print the status line

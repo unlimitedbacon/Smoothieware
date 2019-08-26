@@ -74,6 +74,8 @@ class ST7789 : public LcdBase {
         void setCursorPX(int x, int y);
         void setDrawMode(int c);
         void write(const char* line, int len);
+        int getCursorX() {return tx;}
+        int getCursorY() {return ty;}
 
         // Physical Controls
         uint8_t readButtons();
