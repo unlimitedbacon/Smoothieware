@@ -430,16 +430,33 @@ void ST7789::clear()
     this->bgColor = 0x0000;
 }
 
+void ST7789::pixel(int x, int y, int mode) {
+    uint8_t c1, c2;
+    if (mode) {
+        c1 = this->fgColor >> 8;
+        c2 = this->fgColor & 0xff;
+    } else {
+        c1 = this->bgColor >> 8;
+        c2 = this->bgColor & 0xff;
+    }
+
+    startWrite();
+    setAddrWindow(x, y, 1, 1);
+    spi->write(c1);
+    spi->write(c2);
+    endWrite();
+}
+
 void ST7789::drawHLine(int x, int y, int w, int mode) {
-    fillRect(x, y, w, 1, this->fgColor);
+    fillRect(x, y, w, 1, mode ? this->fgColor : this->bgColor);
 }
 
 void ST7789::drawVLine(int x, int y, int h, int mode) {
-    fillRect(x, y, 1, h, this->fgColor);
+    fillRect(x, y, 1, h, mode ? this->fgColor : this->bgColor);
 }
 
 void ST7789::drawBox(int x, int y, int w, int h, int mode) {
-    fillRect(x, y, w, h, this->fgColor);
+    fillRect(x, y, w, h, mode ? this->fgColor : this->bgColor);
 }
 
 void ST7789::bltGlyph(int x, int y, int w, int h, const uint8_t *glyph, int span, int x_offset, int y_offset) {
@@ -497,10 +514,20 @@ void ST7789::drawChar(int x, int y, unsigned char c, uint16_t color, uint16_t bg
         this->ty += 8;
     } else if (c == '\r') {
     } else {
-        uint8_t c1 = color >> 8;
-        uint8_t c2 = color & 0xff;
-        uint8_t b1 = bg >> 8;
-        uint8_t b2 = bg & 0xff;
+        uint8_t c1, c2, b1, b2;
+
+        // This is not the right thing to do but it's better than nothing
+        if (!this->text_draw_mode) {
+            c1 = bg >> 8;
+            c2 = bg & 0xff;
+            b1 = color >> 8;
+            b2 = color & 0xff;
+        } else {
+            c1 = color >> 8;
+            c2 = color & 0xff;
+            b1 = bg >> 8;
+            b2 = bg & 0xff;
+        }
 
         startWrite();
         setAddrWindow(x, y, 6, 8);
@@ -540,6 +567,11 @@ void ST7789::setCursorPX(int x, int y)
 {
     this->tx = x;
     this->ty = y;
+}
+
+void ST7789::setDrawMode(int c)
+{
+    this->text_draw_mode = c;
 }
 
 void ST7789::write(const char* line, int len)

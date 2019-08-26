@@ -60,6 +60,7 @@ class ST7789 : public LcdBase {
 
         // Graphics functions
         void clear();
+        void pixel(int x, int y, int mode);
         void drawHLine(int x, int y, int w, int mode);
         void drawVLine(int x, int y, int h, int mode);
         void drawBox(int x, int y, int w, int h, int mode);
@@ -71,6 +72,7 @@ class ST7789 : public LcdBase {
         void home();
         void setCursor(uint8_t col, uint8_t row);
         void setCursorPX(int x, int y);
+        void setDrawMode(int c);
         void write(const char* line, int len);
 
         // Physical Controls
@@ -112,6 +114,7 @@ class ST7789 : public LcdBase {
 
         // Text drawing state
         int tx, ty;
+        uint8_t text_draw_mode = 1;
         uint16_t fgColor = 0xffff;
         uint16_t bgColor = 0x0000;
 
