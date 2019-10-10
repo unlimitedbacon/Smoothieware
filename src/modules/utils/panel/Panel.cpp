@@ -662,14 +662,14 @@ float Panel::get_control_value()
     return this->control_base_value + (this->control_normal_counter * this->normal_increment);
 }
 
-bool Panel::is_playing() const
+bool Panel::is_playing()
 {
     void *returned_data;
 
     bool ok = PublicData::get_value( player_checksum, is_playing_checksum, &returned_data );
     if (ok) {
-        bool b = *static_cast<bool *>(returned_data);
-        if (b) return true;
+        this->sd_is_playing = *static_cast<bool *>(returned_data);
+        if (this->sd_is_playing) return true;
     }
     if (host_is_playing) return true;
     return false;

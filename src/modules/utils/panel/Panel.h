@@ -71,7 +71,7 @@ class Panel : public Module {
         float get_default_bed_temp() { return default_bed_temperature; }
 
         // file playing from sd
-        bool is_playing() const;
+        bool is_playing();
         bool is_suspended() const;
         void update_sd_play_info();
         void set_playing_file(std::string f);
